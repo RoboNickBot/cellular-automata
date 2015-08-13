@@ -33,7 +33,7 @@ cell.
 **** Signalling? (Bool)
 A signalling cell will show as True.  A non-signalling (or empty) cell
 shows as False.
-**** Messages (probably a "Map String String")
+*** Messages (probably a "Map String String")
 Cells recieve a message at the start of every turn.  This is usually
 the message they sent themselves on the last turn (basically, their
 "memory"), but there might be "game" configurations that allow agents
@@ -42,7 +42,8 @@ thus allowing for a "player" to send real-time information to their
 owned cells.
 ** Abilities
 Abilities are universe-affecting actions that cells /can/ take, but
-are not obligated to take.  Performing any of these, /except for Remember/, consumes a turn.
+are not obligated to take.  Performing any of these, /except for
+Remember/, consumes a turn.
 *** Alignment Shift
 Besides the rules for compulsory instruction-switching ("Eating"),
 cells can voluntarily copy the instructions of an adjacent non-allied
