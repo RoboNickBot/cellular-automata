@@ -5,10 +5,10 @@ ideas for more interesting cells.
 
 Basically, cells will have /two/ tiers of rules ("laws" and
 "instructions") to follow, and a couple extended ways of seeing the world.
-* Laws
+** Laws
 "Laws" are the physical rules of the universe that all cells must
 follow.  This includes their abilities, senses, and eating rules.
-** Eating
+*** Eating
 If a cell is adjacent to two (or three?) cells which all have the same
 instructions, the cell must exchange its instructions for theirs.
 This is the method by which motive cell cultures can consume and
@@ -16,35 +16,35 @@ battle other cultures.
 
 I'm not sure if this should require a cell be surrounded on two or
 three sides... two seems like enough though.
-** Senses
+*** Senses
 These are the absolute only informations on the universe that cells
 have to work with.
-*** Touch
+**** Touch
 Cells can observe cells that they are touching ("adjacent").  There
 are a couple things they can learn about these cells.
-**** Empty or Occupied? (Bool)
+***** Empty or Occupied? (Bool)
 There is a distinction in these cells between "occupied" cells which
 can be eaten and "unoccupied" cells which can be moved into.
-**** Friend? (Bool)
+***** Friend? (Bool)
 Cells can only determine if the adjacent cells shares their
 instructions or not.  They can not tell if two adjacent cells have the
 same instructions, nor can they read the actual instructions of any
 cell.
-**** Signalling? (Bool)
+***** Signalling? (Bool)
 A signalling cell will show as True.  A non-signalling (or empty) cell
 shows as False.
-*** Messages (probably a "Map String String")
+**** Messages (probably a "Map String String")
 Cells recieve a message at the start of every turn.  This is usually
 the message they sent themselves on the last turn (basically, their
 "memory"), but there might be "game" configurations that allow agents
 outside the universe to edit these messages between send and recieve,
 thus allowing for a "player" to send real-time information to their
 owned cells.
-** Abilities
+*** Abilities
 Abilities are universe-affecting actions that cells /can/ take, but
 are not obligated to take.  Performing any of these, /except for
 Remember/, consumes a turn.
-*** Alignment Shift
+**** Alignment Shift
 Besides the rules for compulsory instruction-switching ("Eating"),
 cells can voluntarily copy the instructions of an adjacent non-allied
 cell.  The cells cannot "read" the instructions; they are just blindly
@@ -53,11 +53,11 @@ installed.
 The main purpose for this is to allow for "food cells" that are not
 part of any culture and can be "eaten" by one single cultured cell
 signalling them.
-*** Movement
+**** Movement
 I think all cells will be able to "move" one space per turn, which
 involves copying their internals to a targeted (empty) adjacent space
 and then becoming empty.
-*** Signalling
+**** Signalling
 Cells can signal an adjacent cell.  The signal is very simple; merely
 a one-bit "high" value (unoccupied or non-signalling cells appear to
 signal a "low" value).
@@ -65,7 +65,7 @@ signal a "low" value).
 It's tempting to expand the signal to 1 byte in size; it all depends
 on whether experimentations ends up taking place on organisms of < 10
 cells or of > 1000 cells I suppose.
-*** Remembering
+**** Remembering
 Cells can send a message which will be recieved by themselves on the
 next turn.  This is the basis for a cell's "memory".  The "Remember"
 action is performed at the close of every turn, and does not "consume"
@@ -75,7 +75,7 @@ I see memory being useful as a way to assign "roles" to members of
 multi-cell organisms that don't have to be derived solely from
 immediate context, thus allowing for more complex multi-cell
 structures.
-* Instructions (Genes)
+** Instructions (Genes)
 With all universal laws and abilities accounted for, these rules
 define the actions the cell chooses on each turn.
 
@@ -113,9 +113,9 @@ Instructions right now will be of the "GeneSet" type:
   -- opportunity for a state monad? with state = memory?
   type GeneSet = (Senses, Memory) -> (Action, Memory)
 #+END_SRC
-* Strategies
+** Strategies
 I can think of a few interesting things a cell culture might want to do.
-** Hacking
+*** Hacking
 Memory-messages are not interrupted by alignment-switches.  If a cell
 culture knew something about the way a rival culture used memory, a
 cell about to be eaten by the rival culture could send itself a
