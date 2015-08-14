@@ -33,13 +33,19 @@ cell.
 ***** Signalling? (Bool)
 A signalling cell will show as True.  A non-signalling (or empty) cell
 shows as False.
-**** Messages (probably a "Map String String")
+**** Messages +(probably a "Map String String")+ (Word8)
 Cells recieve a message at the start of every turn.  This is usually
 the message they sent themselves on the last turn (basically, their
 "memory"), but there might be "game" configurations that allow agents
 outside the universe to edit these messages between send and recieve,
 thus allowing for a "player" to send real-time information to their
 owned cells.
+
+I wanted to use a Map initially, but decided that I needed a finite
+type.  To make "Genes" interesting, they must be finite and concrete
+in some way.  I'd rather not limit the language in which they are
+written (I really just want to use Haskell for that), so instead I
+must limit the space of their inputs.
 *** Abilities
 Abilities are universe-affecting actions that cells /can/ take, but
 are not obligated to take.  Performing any of these, /except for
@@ -87,31 +93,44 @@ Also, ideally, instruction-sets (or "genes") should be combinable and
 composable, so that some form of automated "mutation" and
 "inheritance" could take place!
 
+Actually, instead of a language for instructions, GeneSets will just
+be total functions from CellInput -> CellOutput, which will then be
+"compiled" down to a "Map CellInput CellOutput" term, which can be
+manipulated randomly for mutations.
+
+This, of course, requires CellInput to be a finite space, which is why
+I am now using Word8 for Memory.
+
 Instructions right now will be of the "GeneSet" type:
 
 #+BEGIN_SRC haskell
-  module Genes (foodGenes) where
+  module Genes where
 
-  import Qualfied Data.Map as M
+  import Data.Word8 (Word8)
+  import Cells.Universe (Direction)
 
-  type Memory = M.Map String String
+  type Memory = Word8
 
-  data Senses = Senses { north :: Maybe Other
-                       , south :: Maybe Other
-                       , east  :: Maybe Other
-                       , west  :: Maybe Other }
-                       
+  type Sense = (Direction -> Other)
+
   data Other = Other { signal :: Bool
-                     , ally   :: Bool }
+                     , isAlly :: Bool }
 
-  data Action = Become Direction
-              | Signal [Direction] -- signalling in multiple directions
-                                   -- at once is possible
-              | Move Direction
+  -- I'm not sure how to handle movement...
+  -- 
+  -- Basically, the "empty" cell needs to copy the moving cell, and the
+  -- moving cell needs to copy the "empty" cell, but they both must be
+  -- forced to do so, as instigated by the moving cell...
+
+  data Action = Copy Direction
+              | Signal Direction
               | DoNothing
 
   -- opportunity for a state monad? with state = memory?
-  type GeneSet = (Senses, Memory) -> (Action, Memory)
+  type CellInput = (Sense, Memory)
+  type CellOutput = (Action, Signal, Memory)
+
+  type GeneSet = (CellInput -> CellOutput)
 #+END_SRC
 ** Strategies
 I can think of a few interesting things a cell culture might want to do.
