@@ -1,5 +1,11 @@
-module Data.Cells (Direction) where
+module Data.Cells 
+  ( module Data.Cells.Types
+  , module Data.Cells.Universes
+  , module Data.Cells.Cells
+  
+  ) where
 
-class (Show d, Eq d, Ord d) => Direction d where
-  opposite :: d -> d
-  self :: d
+import Data.Cells.Types
+import Data.Cells.Universes
+import Data.Cells.Cells
+
