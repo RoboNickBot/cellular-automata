@@ -10,8 +10,11 @@ module Data.Cells.Universes
   , Cell1D(..)
 
   ) where
-  
-import Data.Cells.Types (Cell2Char(..))
+
+import Control.Comonad
+
+import Data.Cells.Types
+
 
 data Universe1D a = Universe1D [a] a [a]
   deriving (Show, Eq, Ord)
@@ -25,12 +28,16 @@ extract1D (Universe1D _ x _) = x
 
 duplicate1D :: Universe1D a -> Universe1D (Universe1D a)
 duplicate1D u = Universe1D (tail $ iterate left1D u) 
-                         u 
-                         (tail $ iterate right1D u)
+                           u 
+                           (tail $ iterate right1D u)
 
 instance Functor Universe1D where
   fmap f (Universe1D as x bs) = 
     Universe1D (fmap f as) (f x) (fmap f bs)
+
+instance Comonad Universe1D where
+  extract = extract1D
+  duplicate = duplicate1D
 
 class Cell1D c where
   stepCell :: Universe1D c -> c
