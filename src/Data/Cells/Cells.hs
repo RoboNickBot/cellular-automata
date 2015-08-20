@@ -17,9 +17,9 @@ instance Cell1D SimpleCell where
         cx = (simpleCellVal . extract1D) u
     in SimpleCell (lx /= cx)
 
-instance Cell2Char SimpleCell where
-  cell2Char (SimpleCell True) = '#'
-  cell2Char _ = '\''
+instance ToChar SimpleCell where
+  toChar (SimpleCell True) = '#'
+  toChar _ = '\''
 
 scOff, scOn :: SimpleCell
 scOff = SimpleCell False

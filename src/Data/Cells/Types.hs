@@ -1,12 +1,7 @@
 module Data.Cells.Types 
-  ( Direction
-  , Cell2Char(..)
+  ( ToChar(..)
   
   ) where
 
-class (Show d, Eq d, Ord d) => Direction d where
-  opposite :: d -> d
-  self :: d
-
-class Cell2Char c where
-  cell2Char :: c -> Char
+class ToChar c where
+  toChar :: c -> Char

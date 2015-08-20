@@ -45,13 +45,13 @@ class Cell1D c where
 next1D :: (Cell1D c) => Universe1D c -> Universe1D c
 next1D u = fmap stepCell (duplicate1D u)
 
-string1D :: (Cell2Char c) => Int -> Universe1D c -> String
+string1D :: (ToChar c) => Int -> Universe1D c -> String
 string1D r (Universe1D as x bs) = 
-  let lefthand =  fmap cell2Char $ reverse (take r as)
-      righthand = fmap cell2Char $ take r bs
-  in lefthand ++ [cell2Char x] ++ righthand
+  let lefthand =  fmap toChar $ reverse (take r as)
+      righthand = fmap toChar $ take r bs
+  in lefthand ++ [toChar x] ++ righthand
 
-print1D :: (Cell2Char c, Cell1D c) => Int -> Universe1D c -> IO ()
+print1D :: (ToChar c, Cell1D c) => Int -> Universe1D c -> IO ()
 print1D r u = sequence_ $ take r $ fmap (putStrLn . string1D r) 
                                         (iterate next1D u)
 
