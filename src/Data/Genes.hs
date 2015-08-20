@@ -8,7 +8,10 @@ module Data.Genes where
 
 import Data.Word8 (Word8)
 
-import Data.Cells (Direction)
+-- Just to make things compile; this will have to be updated later
+--- import Data.Cells (Direction)
+class Direction d
+
 
 -- TODO: class Signal
 newtype Signal = Signal Word8 deriving (Show, Eq, Ord)
