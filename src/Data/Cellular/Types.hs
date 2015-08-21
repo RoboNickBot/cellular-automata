@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-module Data.Cells.Types 
+module Data.Cellular.Types 
   ( Axes (..)
   , Select (..)
   , Direction (..)

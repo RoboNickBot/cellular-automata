@@ -3,22 +3,23 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Data.Cells.Universes.Sidewalk
+module Data.Cellular.Universes.Sidewalk
   ( Sidewalk
   , mkSidewalk
   , string
   , printSteps
   
-  , pattern Up, pattern Down
+  , pattern Up
+  , pattern Down
 
   ) where
 
 import Control.Comonad
 
-import Data.Cells.Types
-import Data.Cells.Directions
-import Data.Cells.Universes
-import Data.Cells.Cells
+import Data.Cellular.Types
+import Data.Cellular.Directions
+import Data.Cellular.Universes
+import Data.Cellular.Cells
 
 
 data Axis = UpDown

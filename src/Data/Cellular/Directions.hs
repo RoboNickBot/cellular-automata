@@ -1,10 +1,10 @@
-module Data.Cells.Directions 
+module Data.Cellular.Directions 
   ( opposite
   , self
   
   ) where
 
-import Data.Cells.Types
+import Data.Cellular.Types
 
 
 -- These example axes build off each other...  Going further, could

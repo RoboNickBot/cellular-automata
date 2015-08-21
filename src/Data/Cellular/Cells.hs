@@ -1,13 +1,13 @@
-module Data.Cells.Cells
+module Data.Cellular.Cells
   ( next
 
   ) where
 
 import Control.Comonad
 
-import Data.Cells.Types
-import Data.Cells.Directions
-import Data.Cells.Universes
+import Data.Cellular.Types
+import Data.Cellular.Directions
+import Data.Cellular.Universes
 
 
 next :: (Comonad u, Cell u c) => u c -> u c
