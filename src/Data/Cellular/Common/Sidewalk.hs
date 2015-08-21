@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Data.Cellular.Universes.Sidewalk
+module Data.Cellular.Common.Sidewalk
   ( Sidewalk
   , mkSidewalk
   , string
@@ -14,12 +14,7 @@ module Data.Cellular.Universes.Sidewalk
 
   ) where
 
-import Control.Comonad
-
-import Data.Cellular.Types
-import Data.Cellular.Directions
-import Data.Cellular.Universes
-import Data.Cellular.Cells
+import Data.Cellular
 
 
 data Axis = UpDown
@@ -32,18 +27,14 @@ type instance Axes (Sidewalk c) = Axis
 pattern Down = Just (RightSide UpDown)
 pattern Up = Just (LeftSide UpDown)
 
-left, right :: Sidewalk a -> Sidewalk a
-left (Sidewalk (a:as) x bs) = Sidewalk as a (x:bs)
-right (Sidewalk as x (b:bs)) = Sidewalk (x:as) b bs
-
 instance Functor Sidewalk where
   fmap f (Sidewalk as x bs) = Sidewalk (fmap f as) (f x) (fmap f bs)
 
 instance Comonad Sidewalk where
   extract (Sidewalk _ x _) = x
-  duplicate u = Sidewalk (tail $ iterate left u) 
+  duplicate u = Sidewalk (tail $ iterate (shift Up) u) 
                          u 
-                         (tail $ iterate right u)
+                         (tail $ iterate (shift Down) u)
 
 instance Universe Sidewalk where
   shift Down (Sidewalk     as x (b:bs)) = Sidewalk (x:as) b     bs

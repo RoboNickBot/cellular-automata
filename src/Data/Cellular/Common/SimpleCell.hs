@@ -1,14 +1,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Data.Cellular.Cells.SimpleCell where
+module Data.Cellular.Common.SimpleCell where
 
-import Control.Comonad
-
-import Data.Cellular.Types
-import Data.Cellular.Directions
-import Data.Cellular.Universes
-import Data.Cellular.Cells
-import Data.Cellular.Universes.Sidewalk
+import Data.Cellular
+import Data.Cellular.Common.Sidewalk
 
 
 newtype SimpleCell = SimpleCell { simpleCellVal :: Bool }
