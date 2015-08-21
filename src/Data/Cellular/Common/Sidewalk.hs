@@ -31,6 +31,7 @@ pattern West = Just (LeftSide Axis)
 instance Universe Sidewalk where
   shift East (Sidewalk     as x (b:bs)) = Sidewalk (x:as) b     bs
   shift West (Sidewalk (a:as) x     bs) = Sidewalk     as a (x:bs)
+  shift _ u = u -- For the Nothing case
 
 instance Functor Sidewalk where
   fmap f (Sidewalk as x bs) = Sidewalk (fmap f as) (f x) (fmap f bs)
