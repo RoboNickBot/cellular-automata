@@ -1,5 +1,7 @@
+{-# LANGUAGE TypeFamilies #-}
 module Data.Cellular.Directions 
-  ( opposite
+  ( demote
+  , opposite
   , self
   
   ) where
@@ -12,6 +14,25 @@ import Data.Cellular.Types
 data A1 = A1
 data A2 = A2 | A2A1 A1
 data A3 = A3 | A3A2 A2
+
+data Z = Z deriving Show
+
+data A a = A a deriving Show
+
+data Something u = Something
+
+type instance Axes (Something c) = A (A Z)
+
+unstack :: Staxis a -> a
+unstack (Staxis a) = a
+
+demote' :: Axes u ~ Staxis (Axes v) -- <- OMFG I LOVE TypeFamilies !!!
+        => DirSelect u -> DirSelect v
+demote' (LeftSide a) = LeftSide (unstack a)
+demote' (RightSide a) = RightSide (unstack a)
+
+demote :: Axes u ~ Staxis (Axes v) => Direction u -> Direction v
+demote = fmap demote'
 
 opposite :: Direction u -> Direction u
 opposite = fmap (\sel -> case sel of

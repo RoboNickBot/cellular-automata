@@ -10,7 +10,7 @@ newtype SimpleCell = SimpleCell { simpleCellVal :: Bool }
 
 instance Cell Sidewalk SimpleCell where
   stepCell u = 
-    let lx = (simpleCellVal . extract . shift Up) u
+    let lx = (simpleCellVal . extract . shift West) u
         cx = (simpleCellVal . extract) u
     in SimpleCell (lx /= cx)
 

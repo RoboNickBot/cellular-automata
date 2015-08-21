@@ -3,8 +3,9 @@
 {-# LANGUAGE FunctionalDependencies #-}
 
 module Data.Cellular.Types 
-  ( Axes (..)
-  , Select (..)
+  ( Axis (..), Staxis (..) 
+  , Axes (..)
+  , DirSelect (..)
   , Direction (..)
   
   , Universe (..)
@@ -21,11 +22,18 @@ import Control.Comonad
 ---- Direction stuff -------------------------------------------------
 ----------------------------------------------------------------------
 
+-- multi-axis building blocks!
+
+-- TODO: This is probably already some mathematically well-defined
+-- type in some other library; find out what it is and use it instead
+data Axis = Axis
+data Staxis a = Staxis a | Topxis
+
 type family Axes u
 
-data Select u = LeftSide (Axes u) | RightSide (Axes u)
+data DirSelect u = LeftSide (Axes u) | RightSide (Axes u)
 
-type Direction u = Maybe (Select u)
+type Direction u = Maybe (DirSelect u)
 
 
 ----------------------------------------------------------------------
@@ -37,7 +45,6 @@ class Universe u where
 
 class Cell u c | c -> u where
   stepCell :: u c -> c
-
 
 
 class ToChar c where
