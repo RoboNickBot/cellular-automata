@@ -31,14 +31,17 @@ demote' :: Axes u ~ Staxis (Axes v) -- <- OMFG I LOVE TypeFamilies !!!
 demote' (LeftSide a) = LeftSide (unstack a)
 demote' (RightSide a) = RightSide (unstack a)
 
+-- | Transforms a higher-axes type into the equivalent one step down
 demote :: Axes u ~ Staxis (Axes v) => Direction u -> Direction v
 demote = fmap demote'
 
+-- | Gives the opposite direction
 opposite :: Direction u -> Direction u
 opposite = fmap (\sel -> case sel of
                            LeftSide a -> RightSide a
                            RightSide a -> LeftSide a)
 
+-- | Gives the "identity direction", Nothing
 self :: Direction u
 self = Nothing 
 
