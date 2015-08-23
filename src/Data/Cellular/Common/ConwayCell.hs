@@ -21,7 +21,7 @@ life u = let n = get North u
              sw = conwayCellVal . extract . shift South . shift West $ u
              w = get West u
              e = get East u
-             c = get Nothing u
+             c = get self u
              liveNs = length $ filter id [n,ne,nw,s,se,sw,w,e]
          in if c
                then if liveNs < 2

@@ -23,8 +23,8 @@ data Sidewalk c = Sidewalk [c] c [c]
 
 type instance Axes (Sidewalk c) = Axis
 
-pattern East = Just (RightSide Axis)
-pattern West = Just (LeftSide Axis)
+pattern East = RightSide Axis
+pattern West = LeftSide Axis
 
 ----------------------------------------------------------------------
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE TypeFamilies #-}
+
 module Data.Cellular.Directions 
   ( demote
   , opposite
@@ -8,42 +9,23 @@ module Data.Cellular.Directions
 
 import Data.Cellular.Types
 
-
--- These example axes build off each other...  Going further, could
--- higher dimensions of these be generated automatically?
-data A1 = A1
-data A2 = A2 | A2A1 A1
-data A3 = A3 | A3A2 A2
-
-data Z = Z deriving Show
-
-data A a = A a deriving Show
-
-data Something u = Something
-
-type instance Axes (Something c) = A (A Z)
-
-unstack :: Staxis a -> a
-unstack (Staxis a) = a
-
-demote' :: Axes u ~ Staxis (Axes v) -- <- OMFG I LOVE TypeFamilies !!!
-        => DirSelect u -> DirSelect v
-demote' (LeftSide a) = LeftSide (unstack a)
-demote' (RightSide a) = RightSide (unstack a)
-
 -- | Transforms a higher-axes type into the equivalent one step down
-demote :: Axes u ~ Staxis (Axes v) => Direction u -> Direction v
-demote = fmap demote'
+demote :: Axes u ~ Staxis (Axes v) -- <- OMFG I LOVE TypeFamilies !!!
+        => Direction u -> Direction v
+demote (LeftSide (Staxis a)) = LeftSide a
+demote (RightSide (Staxis a)) = RightSide a
+demote _ = NoDirection
+
 
 -- | Gives the opposite direction
 opposite :: Direction u -> Direction u
-opposite = fmap (\sel -> case sel of
-                           LeftSide a -> RightSide a
-                           RightSide a -> LeftSide a)
+opposite (LeftSide a) = RightSide a
+opposite (RightSide a) = LeftSide a
+opposite _ = NoDirection
 
--- | Gives the "identity direction", Nothing
+-- | Gives the "identity direction", NoDirection
 self :: Direction u
-self = Nothing 
+self = NoDirection
 
 -- TODO: I'd like to have functions that turn the direction by one
 -- step at a time.  These would be easy on a case-by-case basis for

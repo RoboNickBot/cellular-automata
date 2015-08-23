@@ -14,7 +14,7 @@ instance Cell Chessboard SimpleCell2D where
                    sx = get South u
                    wx = get West u
                    ex = get East u
-                   cx = get Nothing u
+                   cx = get self u
                in if wx || nx
                      then SimpleCell2D True
                      else SimpleCell2D False

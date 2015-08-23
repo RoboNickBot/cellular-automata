@@ -32,10 +32,10 @@ mkChessboard = Chessboard
 
 type instance Axes (Chessboard c) = Staxis (Axes (SW.Sidewalk c))
 
-pattern North = Just (LeftSide Topxis)
-pattern South = Just (RightSide Topxis)
-pattern East = Just (RightSide (Staxis Axis))
-pattern West = Just (LeftSide (Staxis Axis))
+pattern North = LeftSide Topxis
+pattern South = RightSide Topxis
+pattern East = RightSide (Staxis Axis)
+pattern West = LeftSide (Staxis Axis)
 
 ----------------------------------------------------------------------
 

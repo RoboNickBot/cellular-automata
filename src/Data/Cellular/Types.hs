@@ -5,7 +5,6 @@
 module Data.Cellular.Types 
   ( Axis (..), Staxis (..) 
   , Axes (..)
-  , DirSelect (..)
   , Direction (..)
   
   , Universe (..)
@@ -31,10 +30,9 @@ data Staxis a = Staxis a | Topxis
 
 type family Axes u
 
-data DirSelect u = LeftSide (Axes u) | RightSide (Axes u)
-
-
-type Direction u = Maybe (DirSelect u)
+data Direction u = LeftSide (Axes u) 
+                 | RightSide (Axes u) 
+                 | NoDirection
 
 
 ----------------------------------------------------------------------
