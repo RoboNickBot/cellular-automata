@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Data.Cellular.Common.Chessboard 
+module Cellular.Chessboard 
   ( Chessboard
   , mkChessboard
   , string
@@ -19,7 +19,7 @@ module Data.Cellular.Common.Chessboard
 import Control.Concurrent
 
 import Data.Cellular
-import qualified Data.Cellular.Common.Sidewalk as SW
+import qualified Cellular.Sidewalk as SW
 
 ----------------------------------------------------------------------
 

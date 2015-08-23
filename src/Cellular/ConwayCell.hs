@@ -1,10 +1,10 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Data.Cellular.Common.ConwayCell where
+module Cellular.ConwayCell where
 
 import Data.Cellular
-import qualified Data.Cellular.Common.Sidewalk as SW
-import Data.Cellular.Common.Chessboard
+import qualified Cellular.Sidewalk as SW
+import Cellular.Chessboard
 
 newtype ConwayCell = ConwayCell { conwayCellVal :: Bool }
 

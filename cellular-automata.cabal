@@ -18,6 +18,11 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Data.Genes
                      , Data.Cellular
+                     , Cellular.Sidewalk
+                     , Cellular.SimpleCell
+                     , Cellular.Chessboard
+                     , Cellular.SimpleCell2D
+                     , Cellular.ConwayCell
 
   other-extensions:    MultiParamTypeClasses
                      , FunctionalDependencies

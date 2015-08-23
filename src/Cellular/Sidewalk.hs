@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module Data.Cellular.Common.Sidewalk
+module Cellular.Sidewalk
   ( Sidewalk
   , mkSidewalk
   , string
