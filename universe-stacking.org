@@ -1,0 +1,13 @@
+* Universe types are Stackable just like Direction types
+It just occurred to me that there is really only one way to construct
+new universes on top of others, and that if I generalize that in the
+same way that dimension types are generalized, I could implement new
+universes just by stating their type.
+
+In fact, I have a hunch that universes aren't even their own thing;
+they're totally defined by and can be uniquely identified by the
+dimension type that is associated with them!
+
+One change that seems necessary to make this work is a "base" universe
+with just one dimension that sits under Sidewalk.  (Or maybe a
+zero-dimensional base sits under that?)
