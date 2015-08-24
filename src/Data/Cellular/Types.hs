@@ -1,140 +1,107 @@
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
-module Data.Cellular.Types 
-  ( Axis (..), Staxis (..) 
-  , Axes (..)
-  , Direction (..)
-  
-  , Universe (..)
-  , Cell (..)
-
-  , ToChar (..)
-  
-  ) where
+module Data.Cellular.Types where
 
 import Control.Comonad
 
 ----------------------------------------------------------------------
----- Direction stuff -------------------------------------------------
+---- Dimension stuff -------------------------------------------------
 ----------------------------------------------------------------------
 
--- multi-axis building blocks!
+data D n = D n | Up | Down
 
--- TODO: This is probably already some mathematically well-defined
--- type in some other library; find out what it is and use it instead
-data Axis = Axis
-data Staxis a = Staxis a | Topxis
+class DType d where
+  empty :: d
 
-type family Axes u
-
-data Direction u = LeftSide (Axes u) 
-                 | RightSide (Axes u) 
-                 | NoDirection
-
-----------------------------------------------------------------------
-
--- Possible alternate definition for Universe, that doesn't require a
--- type family?  But how would I go about associating Directions to
--- this?...
-data U u = U [u] u [u]
-
-data Cell' = Cell'
-
-type U1 = U Cell'
-type U2 = U (U Cell')
-type U3 = U (U (U Cell'))
-
--- What about this:
-data U' c = U' [U' c] (U' c) [U' c] | Base' c
--- Now, all universes have the same type, and can be constructed to
--- different numbers of dimensions as needed based on the
--- differently-typed Direction types.
--- 
--- Nah, I don't like that all universes have the same type.
-
-----------------------------------------------------------------------
-
-data Stack a = Stack a | Focus
-
-data Orientation a = Up a | Down a | None
-
-
-data Proxy a = Proxy
-
-proxy :: a -> Proxy a
-proxy a = Proxy :: (Proxy a)
-
-class Shift n where
-  type Universe' n c
-  shift' :: Proxy c -- why does this have to be 'c' and not 'n'?
-         -> Orientation n -- make the 'n' here the result of Dir
-                          -- (Universe' n c), where Dir is a Type
-                          -- Family, to get around the non-injective
-                          -- type function problem?  This way, if we
-                          -- have (Universe' n c), then we can know
-                          -- for sure what n produced it (note: this
-                          -- may be impossible?) also, it's 'c' that's
-                          -- the problem, not 'n'
-         -> Universe' n c
-         -> Universe' n c
-
-instance Shift () where
-  type Universe' () c = c
-  shift' _ _ = id
-
-instance (Shift n, Demote n) => Shift (Stack n) where
-  -- Another solution: make a named data type for the Universe output
-  -- tuple and stick some phantom types for 'n' and 'c' in there, then
-  -- use that in the type sig instead of (Universe' n c)
-  type Universe' (Stack n) c = ( [Universe' n c]
-                               , Universe' n c
-                               , [Universe' n c] )
-  shift' _ None u = u
-  shift' _ (Up Focus) (a:as, x, bs) = (as, a, x:bs)
-  shift' _ (Down Focus) (as, x, b:bs) = (x:as, b, bs)
-  shift' p o (as, x, bs) = let s = shift' p (demoteO o)
-                           in (map s as, s x, map s bs)
-
--- !!!!!!
--- @@@@@@ Shift2 typechecks!
-class Shift2 n u where
-  shift2 :: Orientation n -> u -> u
+instance DType () where
+  empty = ()
   
-instance Shift2 () c where
-  shift2 _ = id
+instance (DType d) => DType (D d) where
+  empty = D empty
+
+-- demote :: (d ~ D n, DType d) => D d -> d -- requires typefamilies
+demote :: (DType d) => D d -> d
+demote (D n) = n
+demote _ = empty
+
+----------------------------------------------------------------------
+
+data Cell c = Cell c
+  deriving (Show, Eq, Ord)
+
+data U u c = U [u c] (u c) [u c]
+  deriving (Show, Eq, Ord)
+
+
+-- Bijective Type Relation!  I totally didn't expect this to be
+-- possible!
+class Dimension (u :: * -> *) d | u d -> u d where
+  shift :: (DType d) => d -> u c -> u c
+
+instance Dimension Cell () where
+  shift _ = id
+
+instance (Dimension u d, DType d) => Dimension (U u) (D d) where
+  shift d (U (a:as) x (b:bs)) = 
+    case d of
+    
+      Up   -> U       as a (x:b:bs)
+      Down -> U (x:a:as) b       bs
+      
+      _ -> let s = shift (demote d)
+           in U (map s (a:as)) 
+                (s x) 
+                (map s (b:bs))
+
+
+instance Functor Cell where
+  fmap f (Cell c) = Cell (f c)
+
+instance (Functor u) => Functor (U u) where
+  fmap f (U as x bs) = U (map (fmap f) as) 
+                         (fmap f x) 
+                         (map (fmap f) bs)
+
+
+instance Comonad Cell where
+  extract (Cell x) = x
+  duplicate c = Cell c
   
-instance (Shift2 n c, Demote n) => Shift2 (Stack n) ([c], c, [c]) where
-  shift2 None u = u
-  shift2 (Up Focus) (a:as, x, bs) = (as, a, x:bs)
-  shift2 (Down Focus) (as, x, b:bs) = (x:as, b, bs)
-  shift2 o (as, x, bs) = let s = shift2 (demoteO o)
-                         in (map s as, s x, map s bs)
+instance (Comonad u, Dimension u d, DType d) => Comonad (U u) where
+  extract (U _ x _) = extract x
+  duplicate u = U (dshift Up u)
+                  (dupSlice u)
+                  (dshift Down u)
 
-class Demote n where
-  demoteO :: Orientation (Stack n) -> Orientation n
+dshift d = map dupSlice . tail . iterate (shift d)
 
-instance Demote (Stack n) where
-  demoteO (Up (Stack (Stack n))) = (Up (Stack n))
-  demoteO (Down (Stack (Stack n))) = (Down (Stack n))
+dupSlice :: U u c -> u (U u c)
+dupSlice = undefined
 
--- demote' :: u ~ Stack v => Orientation u -> Orientation v
--- demote' (Up (Stack a)) = Up a
--- demote' (Down (Stack a)) = Down a
--- demote' _ = None
+-- dupSlice :: Chessboard c -> SW.Sidewalk (Chessboard c)
+-- dupSlice u = SW.mkSidewalk (tail $ iterate (shift West) u)
+--                            u
+--                            (tail $ iterate (shift East) u)
+
+-- instance Comonad Sidewalk where
+--   extract (Sidewalk _ x _) = x
+--   duplicate u = Sidewalk (tail $ iterate (shift West) u) 
+--                          u 
+--                          (tail $ iterate (shift East) u)
 
 ----------------------------------------------------------------------
 ---- Universes and Cells ---------------------------------------------
 ----------------------------------------------------------------------
 
-class Universe u where
-  shift :: Direction (u c) -> u c -> u c
-
-class Cell u c | c -> u where
-  stepCell :: u c -> c
+-- class Cell u c | c -> u where
+--   stepCell :: u c -> c
 
 
-class ToChar c where
-  toChar :: c -> Char
+-- class ToChar c where
+--   toChar :: c -> Char
