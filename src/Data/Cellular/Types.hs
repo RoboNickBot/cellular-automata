@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -15,7 +16,6 @@ module Data.Cellular.Types
   ) where
 
 import Control.Comonad
-
 
 ----------------------------------------------------------------------
 ---- Direction stuff -------------------------------------------------
@@ -86,6 +86,9 @@ instance Shift () where
   shift' _ _ = id
 
 instance (Shift n, Demote n) => Shift (Stack n) where
+  -- Another solution: make a named data type for the Universe output
+  -- tuple and stick some phantom types for 'n' and 'c' in there, then
+  -- use that in the type sig instead of (Universe' n c)
   type Universe' (Stack n) c = ( [Universe' n c]
                                , Universe' n c
                                , [Universe' n c] )
@@ -94,6 +97,21 @@ instance (Shift n, Demote n) => Shift (Stack n) where
   shift' _ (Down Focus) (as, x, b:bs) = (x:as, b, bs)
   shift' p o (as, x, bs) = let s = shift' p (demoteO o)
                            in (map s as, s x, map s bs)
+
+-- !!!!!!
+-- @@@@@@ Shift2 typechecks!
+class Shift2 n u where
+  shift2 :: Orientation n -> u -> u
+  
+instance Shift2 () c where
+  shift2 _ = id
+  
+instance (Shift2 n c, Demote n) => Shift2 (Stack n) ([c], c, [c]) where
+  shift2 None u = u
+  shift2 (Up Focus) (a:as, x, bs) = (as, a, x:bs)
+  shift2 (Down Focus) (as, x, b:bs) = (x:as, b, bs)
+  shift2 o (as, x, bs) = let s = shift2 (demoteO o)
+                         in (map s as, s x, map s bs)
 
 class Demote n where
   demoteO :: Orientation (Stack n) -> Orientation n
