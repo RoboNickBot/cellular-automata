@@ -1,10 +1,6 @@
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
 
 module Data.Cellular.Types where
 
@@ -14,7 +10,7 @@ import Control.Comonad
 ---- Dimension stuff -------------------------------------------------
 ----------------------------------------------------------------------
 
-data D n = D n | Up | Down
+
 
 class DType d where
   empty :: d
@@ -32,19 +28,47 @@ demote _ = empty
 
 ----------------------------------------------------------------------
 
-data Cell c = Cell c
+data C c = C c
   deriving (Show, Eq, Ord)
+
+instance Functor C where
+  fmap f (C c) = C (f c)
+
+instance Comonad C where
+  extract (C x) = x
+  duplicate c = C c
 
 data U u c = U [u c] (u c) [u c]
   deriving (Show, Eq, Ord)
 
+shiftUp, shiftDown :: U u c -> U u c
+shiftUp   (U (a:as) x     bs) = U     as a (x:bs)
+shiftDown (U     as x (b:bs)) = U (x:as) b     bs
+
+instance (Functor u) => Functor (U u) where
+  fmap f (U as x bs) = U (map (fmap f) as) 
+                         (fmap f x) 
+                         (map (fmap f) bs)
+
+instance (Comonad u) => Comonad (U u) where
+  extract (U _ x _) = extract x
+  duplicate u = U (dshift shiftUp u)
+                  (dupSlice u)
+                  (dshift shiftDown u)
+
+dshift s = map dupSlice . tail . iterate s
+
+dupSlice :: (Comonad u) => U u c -> u (U u c)
+dupSlice u@(U _ x _) = fmap (const u) x
 
 -- Bijective Type Relation!  I totally didn't expect this to be
 -- possible!
 class Dimension (u :: * -> *) d | u d -> u d where
   shift :: (DType d) => d -> u c -> u c
 
-instance Dimension Cell () where
+data D n = D n | Up | Down
+
+instance Dimension C () where
   shift _ = id
 
 instance (Dimension u d, DType d) => Dimension (U u) (D d) where
@@ -60,29 +84,6 @@ instance (Dimension u d, DType d) => Dimension (U u) (D d) where
                 (map s (b:bs))
 
 
-instance Functor Cell where
-  fmap f (Cell c) = Cell (f c)
-
-instance (Functor u) => Functor (U u) where
-  fmap f (U as x bs) = U (map (fmap f) as) 
-                         (fmap f x) 
-                         (map (fmap f) bs)
-
-
-instance Comonad Cell where
-  extract (Cell x) = x
-  duplicate c = Cell c
-  
-instance (Comonad u, Dimension u d, DType d) => Comonad (U u) where
-  extract (U _ x _) = extract x
-  duplicate u = U (dshift Up u)
-                  (dupSlice u)
-                  (dshift Down u)
-
-dshift d = map dupSlice . tail . iterate (shift d)
-
-dupSlice :: U u c -> u (U u c)
-dupSlice = undefined
 
 -- dupSlice :: Chessboard c -> SW.Sidewalk (Chessboard c)
 -- dupSlice u = SW.mkSidewalk (tail $ iterate (shift West) u)
