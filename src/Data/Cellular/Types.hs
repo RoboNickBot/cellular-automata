@@ -1,18 +1,10 @@
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Data.Cellular.Types where
 
 import Control.Comonad
-
-----------------------------------------------------------------------
----- Dimension stuff -------------------------------------------------
-----------------------------------------------------------------------
-
-
-
 
 ----------------------------------------------------------------------
 
@@ -51,20 +43,47 @@ dupSlice u@(U _ x _) = fmap (const u) x
 
 ----------------------------------------------------------------------
 
-data D n = D n | Up | Down
+-- data D n = D n | Up | Down
+
+data family Direction u
+data instance Direction (C c) = Base
+data instance Direction (U u c) = D (Direction (u c)) | Up | Down
+
+class Universe u where
+  empty :: Direction (u c)
+  demote :: Direction (U u c) -> Direction (u c)
+  shift :: Direction (u c) -> u c -> u c
+
+instance Universe C where
+  empty = Base
+  demote _ = Base
+  shift _ = id
+
+instance (Universe u) => Universe (U u) where
+  empty = D empty
+  
+  demote (D d) = d
+  demote _ = empty
+
+  shift Up u = shiftUp u
+  shift Down u = shiftDown u
+  shift d (U as x bs) = let s = shift (demote d)
+                        in U (map s as)
+                             (s x)
+                             (map s bs)
 
 -- Bijective Type Relation!  I totally didn't expect this to be
 -- possible!  Of course, it didn't really work out.  Shoulda trusted
 -- my instincts :(
-class Dimension (u :: * -> *) d | u d -> u d where
-  empty :: d
-  demote :: D d -> d
-  shift :: d -> u c -> u c
+-- class Dimension (u :: * -> *) d | u d -> u d where
+--   empty :: d
+--   demote :: D d -> d
+--   shift :: d -> u c -> u c
 
-instance Dimension C () where
-  empty = ()
-  demote _ = ()
-  shift _ = id
+-- instance Dimension C () where
+--   empty = ()
+--   demote _ = ()
+--   shift _ = id
 
 -- instance forall u d. (Dimension u d) => Dimension (U u) (D d) where
 
@@ -73,12 +92,6 @@ instance Dimension C () where
 --   demote (D d) = d
 --   demote _ = (empty :: d)
 
---   shift Up u = shiftUp u
---   shift Down u = shiftDown u
---   shift d (U as x bs) = let s = shift (demote d)
---                         in U (map s as)
---                              (s x)
---                              (map s bs)
                              
 
 -- class DType d where
