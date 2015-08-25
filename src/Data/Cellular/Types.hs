@@ -1,6 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE GADTs #-}
 
 module Data.Cellular.Types where
 
@@ -43,16 +41,16 @@ dupSlice u@(U _ x _) = fmap (const u) x
 
 ----------------------------------------------------------------------
 
--- data D n = D n | Up | Down
-
-data family Direction u
-data instance Direction (C c) = Base
-data instance Direction (U u c) = D (Direction (u c)) | Up | Down
+data D u where
+  Base ::            D (C c)
+  D    :: D (u c) -> D (U u c)
+  Up   ::            D u
+  Down ::            D u
 
 class Universe u where
-  empty :: Direction (u c)
-  demote :: Direction (U u c) -> Direction (u c)
-  shift :: Direction (u c) -> u c -> u c
+  empty :: D (u c)
+  demote :: D (U u c) -> D (u c)
+  shift :: D (u c) -> u c -> u c
 
 instance Universe C where
   empty = Base
@@ -71,53 +69,6 @@ instance (Universe u) => Universe (U u) where
                         in U (map s as)
                              (s x)
                              (map s bs)
-
--- Bijective Type Relation!  I totally didn't expect this to be
--- possible!  Of course, it didn't really work out.  Shoulda trusted
--- my instincts :(
--- class Dimension (u :: * -> *) d | u d -> u d where
---   empty :: d
---   demote :: D d -> d
---   shift :: d -> u c -> u c
-
--- instance Dimension C () where
---   empty = ()
---   demote _ = ()
---   shift _ = id
-
--- instance forall u d. (Dimension u d) => Dimension (U u) (D d) where
-
---   empty = D (empty :: d)
-
---   demote (D d) = d
---   demote _ = (empty :: d)
-
-                             
-
--- class DType d where
---   empty :: d
-
--- instance DType () where
---   empty = ()
-
--- instance (DType d) => DType (D d) where
---   empty = D empty
-
--- -- demote :: (d ~ D n, DType d) => D d -> d -- requires typefamilies
--- demote :: (DType d) => D d -> d
--- demote (D n) = n
--- demote _ = empty
-
--- dupSlice :: Chessboard c -> SW.Sidewalk (Chessboard c)
--- dupSlice u = SW.mkSidewalk (tail $ iterate (shift West) u)
---                            u
---                            (tail $ iterate (shift East) u)
-
--- instance Comonad Sidewalk where
---   extract (Sidewalk _ x _) = x
---   duplicate u = Sidewalk (tail $ iterate (shift West) u) 
---                          u 
---                          (tail $ iterate (shift East) u)
 
 ----------------------------------------------------------------------
 ---- Universes and Cells ---------------------------------------------
