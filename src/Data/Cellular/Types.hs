@@ -3,6 +3,7 @@
 module Data.Cellular.Types where
 
 import Control.Comonad
+import Control.Applicative ((<$))
 
 ----------------------------------------------------------------------
 
@@ -26,26 +27,26 @@ instance Comonad C where
 data U u c = U [u c] (u c) [u c]
   deriving (Show, Eq, Ord)
 
-umap :: (u c -> v k) -> U u c -> U v k
-umap f (U as x bs) = U (map f as) (f x) (map f bs)
-
 shiftUp, shiftDown :: U u c -> U u c
 shiftUp   (U (a:as) x     bs) = U     as a (x:bs)
 shiftDown (U     as x (b:bs)) = U (x:as) b     bs
+
+umap :: (u c -> v k) -> U u c -> U v k
+umap f (U as x bs) = U (map f as) (f x) (map f bs)
+
+promote :: U u c -> U (U u) c
+promote u = let ds f = tail . iterate f
+            in U (ds shiftUp u) u (ds shiftDown u)
+
+demote :: U u c -> u c
+demote (U _ x _) = x
 
 instance (Functor u) => Functor (U u) where                       
   fmap = umap . fmap
 
 instance (Comonad u) => Comonad (U u) where
   extract (U _ x _) = extract x
-  duplicate u = U (dshift shiftUp u)
-                  (dupSlice u)
-                  (dshift shiftDown u)
-
-dshift s = map dupSlice . tail . iterate s
-
-dupSlice :: (Comonad u) => U u c -> u (U u c)
-dupSlice u@(U _ x _) = fmap (const u) x
+  duplicate = umap (\u -> u <$ demote u) . promote
 
 ----------------------------------------------------------------------
 
@@ -57,23 +58,23 @@ data D u where
 
 class Comonad u => Universe u where
   empty :: D u
-  demote :: D (U u) -> D u
+  demoteD :: D (U u) -> D u
   shift :: D u -> u c -> u c
 
 instance Universe C where
   empty = Base
-  demote _ = Base
+  demoteD _ = Base
   shift _ = id
 
 instance (Universe u) => Universe (U u) where
   empty = D empty
   
-  demote (D d) = d
-  demote _ = empty
+  demoteD (D d) = d
+  demoteD _ = empty
 
   shift Up   = shiftUp
   shift Down = shiftDown
-  shift d    = umap (shift (demote d))
+  shift d    = umap (shift (demoteD d))
 
 get :: (Universe u) => D u -> u c -> c
 get d = extract . shift d
