@@ -42,15 +42,15 @@ dupSlice u@(U _ x _) = fmap (const u) x
 ----------------------------------------------------------------------
 
 data D u where
-  Base ::            D (C c)
-  D    :: D (u c) -> D (U u c)
-  Up   ::            D u
-  Down ::            D u
+  Base ::        D C
+  D    :: D u -> D (U u)
+  Up   ::        D u
+  Down ::        D u
 
 class Universe u where
-  empty :: D (u c)
-  demote :: D (U u c) -> D (u c)
-  shift :: D (u c) -> u c -> u c
+  empty :: D u
+  demote :: D (U u) -> D u
+  shift :: D u -> u c -> u c
 
 instance Universe C where
   empty = Base
