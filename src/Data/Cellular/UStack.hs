@@ -1,16 +1,15 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 
-module Data.Cellular.Types where
+module Data.Cellular.UStack where
 
 import Control.Comonad
-import Control.Applicative ((<$))
+
+import Data.Cellular.Classes
 
 ----------------------------------------------------------------------
-
--- an alternate form for U, using GADTs
-data U' u c where
-  C' :: c -> U' C c
-  U' :: [u c] -> (u c) -> [u c] -> U' u c
 
 data C c = C c
   deriving (Show, Eq, Ord)
@@ -22,7 +21,7 @@ instance Comonad C where
   extract (C x) = x
   duplicate c = C c
 
-
+----------------------------------------------------------------------
 
 data U u c = U [u c] (u c) [u c]
   deriving (Show, Eq, Ord)
@@ -50,34 +49,34 @@ instance (Comonad u) => Comonad (U u) where
 
 ----------------------------------------------------------------------
 
-data D u where
-  Base ::        D C
-  D    :: D u -> D (U u)
-  Up   ::        D u
-  Down ::        D u
+class Comonad u => UStack u where
+  data DStack u
+  emptyDir :: DStack u
+  demoteDir :: DStack (U u) -> DStack u
+  shiftU :: DStack u -> u c -> u c
 
-class Comonad u => Universe u where
-  empty :: D u
-  demoteD :: D (U u) -> D u
-  shift :: D u -> u c -> u c
+instance UStack C where
+  data DStack C = Base
+  emptyDir = Base
+  demoteDir _ = Base
+  shiftU _ = id
 
-instance Universe C where
-  empty = Base
-  demoteD _ = Base
-  shift _ = id
+instance (UStack u) => UStack (U u) where
+  data DStack (U u) = Stack (DStack u) | Up | Down
+  emptyDir = Stack emptyDir
 
-instance (Universe u) => Universe (U u) where
-  empty = D empty
-  
-  demoteD (D d) = d
-  demoteD _ = empty
+  demoteDir (Stack d) = d
+  demoteDir _ = emptyDir
 
-  shift Up   = shiftUp
-  shift Down = shiftDown
-  shift d    = umap (shift (demoteD d))
+  shiftU Up   = shiftUp
+  shiftU Down = shiftDown
+  shiftU d    = umap (shiftU (demoteDir d))
 
-get :: (Universe u) => D u -> u c -> c
-get d = extract . shift d
+----------------------------------------------------------------------
+
+instance (UStack u) => Universe u where
+  data Direction u = DStack (DStack u)
+  get (DStack d) = extract . shiftU d
 
 ----------------------------------------------------------------------
 ---- Universes and Cells ---------------------------------------------
@@ -89,3 +88,4 @@ get d = extract . shift d
 
 -- class ToChar c where
 --   toChar :: c -> Char
+
