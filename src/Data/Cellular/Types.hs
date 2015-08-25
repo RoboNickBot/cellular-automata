@@ -1,6 +1,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.Cellular.Types where
 
@@ -12,19 +13,6 @@ import Control.Comonad
 
 
 
-class DType d where
-  empty :: d
-
-instance DType () where
-  empty = ()
-  
-instance (DType d) => DType (D d) where
-  empty = D empty
-
--- demote :: (d ~ D n, DType d) => D d -> d -- requires typefamilies
-demote :: (DType d) => D d -> d
-demote (D n) = n
-demote _ = empty
 
 ----------------------------------------------------------------------
 
@@ -61,29 +49,51 @@ dshift s = map dupSlice . tail . iterate s
 dupSlice :: (Comonad u) => U u c -> u (U u c)
 dupSlice u@(U _ x _) = fmap (const u) x
 
--- Bijective Type Relation!  I totally didn't expect this to be
--- possible!
-class Dimension (u :: * -> *) d | u d -> u d where
-  shift :: (DType d) => d -> u c -> u c
+----------------------------------------------------------------------
 
 data D n = D n | Up | Down
 
+-- Bijective Type Relation!  I totally didn't expect this to be
+-- possible!  Of course, it didn't really work out.  Shoulda trusted
+-- my instincts :(
+class Dimension (u :: * -> *) d | u d -> u d where
+  empty :: d
+  demote :: D d -> d
+  shift :: d -> u c -> u c
+
 instance Dimension C () where
+  empty = ()
+  demote _ = ()
   shift _ = id
 
-instance (Dimension u d, DType d) => Dimension (U u) (D d) where
-  shift d (U (a:as) x (b:bs)) = 
-    case d of
-    
-      Up   -> U       as a (x:b:bs)
-      Down -> U (x:a:as) b       bs
-      
-      _ -> let s = shift (demote d)
-           in U (map s (a:as)) 
-                (s x) 
-                (map s (b:bs))
+-- instance forall u d. (Dimension u d) => Dimension (U u) (D d) where
 
+--   empty = D (empty :: d)
 
+--   demote (D d) = d
+--   demote _ = (empty :: d)
+
+--   shift Up u = shiftUp u
+--   shift Down u = shiftDown u
+--   shift d (U as x bs) = let s = shift (demote d)
+--                         in U (map s as)
+--                              (s x)
+--                              (map s bs)
+                             
+
+-- class DType d where
+--   empty :: d
+
+-- instance DType () where
+--   empty = ()
+
+-- instance (DType d) => DType (D d) where
+--   empty = D empty
+
+-- -- demote :: (d ~ D n, DType d) => D d -> d -- requires typefamilies
+-- demote :: (DType d) => D d -> d
+-- demote (D n) = n
+-- demote _ = empty
 
 -- dupSlice :: Chessboard c -> SW.Sidewalk (Chessboard c)
 -- dupSlice u = SW.mkSidewalk (tail $ iterate (shift West) u)
