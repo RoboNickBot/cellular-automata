@@ -6,6 +6,11 @@ import Control.Comonad
 
 ----------------------------------------------------------------------
 
+-- an alternate form for U, using GADTs
+data U' u c where
+  C' :: c -> U' C c
+  U' :: [u c] -> (u c) -> [u c] -> U' u c
+
 data C c = C c
   deriving (Show, Eq, Ord)
 
@@ -16,7 +21,7 @@ instance Comonad C where
   extract (C x) = x
   duplicate c = C c
 
-----------------------------------------------------------------------
+
 
 data U u c = U [u c] (u c) [u c]
   deriving (Show, Eq, Ord)
