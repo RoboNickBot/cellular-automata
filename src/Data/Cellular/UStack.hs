@@ -3,11 +3,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Data.Cellular.UStack where
+module Data.Cellular.UStack 
+  ( C (..)
+  , U (..)
+  , UStack (..)) where
 
 import Control.Comonad
 
-import Data.Cellular.Classes
+import Data.Cellular.Direction
+import Data.Cellular.Universe
 
 ----------------------------------------------------------------------
 
@@ -75,8 +79,8 @@ instance (UStack u) => UStack (U u) where
 ----------------------------------------------------------------------
 
 instance (UStack u) => Universe u where
-  data Direction u = DStack (DStack u)
-  get (DStack d) = extract . shiftU d
+  data DirectionType u = DStack (DStack u)
+  mkDir (DStack d) = Direction $ extract . shiftU d
 
 ----------------------------------------------------------------------
 ---- Universes and Cells ---------------------------------------------
