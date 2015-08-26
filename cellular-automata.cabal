@@ -27,8 +27,10 @@ library
   other-extensions:    MultiParamTypeClasses
                      , FunctionalDependencies
 
-  build-depends:       base >=4.8 && <4.9
-                     , comonad >=4.2 && <4.3
+  build-depends:       base    >=4.8  && <4.9
+                     , comonad >=4.2  && <4.3
+                     , lens    >=4.12 && <4.13
+
                      , word8 >=0.1 && <0.2
 
   hs-source-dirs:      src

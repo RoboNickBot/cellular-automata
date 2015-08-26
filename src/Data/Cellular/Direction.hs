@@ -25,3 +25,5 @@ instance (Comonad u) => Monoid (Direction u) where
   mempty = Direction extract
   mappend (Direction g) (Direction h) = Direction (h . extend g)
 
+
+

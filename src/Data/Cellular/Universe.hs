@@ -1,19 +1,18 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
-module Data.Cellular.Universe 
-  (Universe (..)
-  , shift
+module Data.Cellular.Universe
+  ( Universe (..)
   
   ) where
 
 import Control.Comonad
 
-import Data.Cellular.Direction
+----------------------------------------------------------------------
 
-class (Comonad u) => Universe u where
-  data DirectionType u
-  mkDir :: DirectionType u -> Direction u
-  uniform :: c -> u c
+class Universe u where
+  step :: (u c -> c) -> u c -> u c
 
-shift :: (Comonad u) => Direction u -> u c -> u c
-shift d = extend (get d)
+instance Comonad u => Universe u where
+  step r = fmap r . duplicate
+
