@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Data.Cellular
   ( module Control.Comonad
   , (<>)
@@ -9,13 +11,14 @@ module Data.Cellular
   , loc
   , get
   , self
+  , toStringU2
 
   ) where
 
 
 import Control.Comonad
-
 import Data.Monoid
+import Data.List (intersperse)
 
 import Data.Monoid.Extractor
 import Data.Cellular.Classes
@@ -30,3 +33,10 @@ get l = applyExtractor l
 
 self :: UStack u => Loc u
 self = loc emptyDir
+
+toStringU2 :: (Draw Char c) => Int -> U (U C) c -> String
+toStringU2 i = concat 
+               . intersperse "\n" 
+               . toList2Lim i
+               . fmap draw
+

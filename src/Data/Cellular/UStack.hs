@@ -4,7 +4,10 @@ module Data.Cellular.UStack
   ( C, U
   , UStack (..)
   , DStack (..)
+  
   , getFrom, setAt
+  , toList2Lim
+  , bigbang
 
   ) where
 
@@ -105,3 +108,21 @@ getFrom d = extract . shift d
 -- I suspect there is a more comonadic way to do setting though...
 setAt :: UStack u => DStack u -> c -> u c -> u c
 setAt d c u = shift (oppositeDir d) (modFocus (const c) (shift d u))
+
+
+-- quick hack zone --
+
+unC :: C c -> c
+unC (C c) = c
+
+toList1 :: U C c -> [c]
+toList1 (U _ x bs) = map unC (x:bs)
+
+toList1Lim :: Int -> U C c -> [c]
+toList1Lim i = take i . toList1
+
+toList2Lim :: Int -> U (U C) c -> [[c]]
+toList2Lim i (U _ x bs) = take i $ map (toList1Lim i) (x:bs)
+
+bigbang :: UStack u => c -> c -> u c
+bigbang seed space = modFocus (const seed) $ uniform space
