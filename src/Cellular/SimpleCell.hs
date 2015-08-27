@@ -13,9 +13,9 @@ import Cellular.Common
 newtype SimpleCell = SimpleCell { val :: Bool }
 
 instance Automaton U2 SimpleCell where
-  rule u = let lx = val $ get west u
+  rule u = let lx = val $ get north u
                cx = val $ get self u
-           in SimpleCell (lx /= cx)
+           in SimpleCell (not cx && lx)
 
 instance Draw Char SimpleCell where
   draw (SimpleCell True) = '#'

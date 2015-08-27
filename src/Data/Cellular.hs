@@ -12,6 +12,7 @@ module Data.Cellular
   , get
   , self
   , toStringU2
+  , toStringU1
 
   ) where
 
@@ -33,6 +34,9 @@ get l = applyExtractor l
 
 self :: UStack u => Loc u
 self = loc emptyDir
+
+toStringU1 :: (Draw Char c) => Int -> U C c -> String
+toStringU1 i = toList1Lim i . fmap draw
 
 toStringU2 :: (Draw Char c) => Int -> U (U C) c -> String
 toStringU2 i = concat 
