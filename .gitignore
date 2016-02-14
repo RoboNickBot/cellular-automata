@@ -2,7 +2,3 @@
 dist/*
 .cabal-sandbox
 cabal.sandbox.config
-*.diff
-*.o
-*.hi
-*.pyc

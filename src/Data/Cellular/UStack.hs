@@ -17,7 +17,7 @@ module Data.Cellular.UStack
 
 import Control.Comonad
 
-import Data.Cellular.Classes
+-- import Data.Cellular.Classes
 
 ----------------------------------------------------------------------
 
@@ -65,6 +65,7 @@ class Functor u => UStacker u where
   uniform :: c -> u c
 
   extract' :: u c -> c
+  duplicate' :: u c -> u (u c)
 
 instance UStacker C where
   data DStack C = Base
@@ -78,6 +79,7 @@ instance UStacker C where
   uniform = C
   
   extract' (C x) = x
+  duplicate' c = C c
 
 instance UStacker u => UStacker (U u) where
   data DStack (U u) = Stack (DStack u) | Up | Down
@@ -99,10 +101,15 @@ instance UStacker u => UStacker (U u) where
   uniform c = infiniteCopies (uniform c)
   
   extract' = extract' . demote
+  duplicate' u = let ud = umap duplicate' u
+                     ups = tail $ iterate (shift Up) ud
+                     downs = tail $ iterate (shift Down) ud
+                     ds f = tail . map (umap extract') . iterate f
+                 in undefined
 
-data UStack s c = UStack { uStacker :: s c }
+data UStacker s => UStack s c = UStack { uStacker :: s c }
 
-instance Functor s => Functor (UStack s) where
+instance UStacker s => Functor (UStack s) where
   fmap f = UStack . fmap f . uStacker
 
 instance UStacker s => Comonad (UStack s) where
