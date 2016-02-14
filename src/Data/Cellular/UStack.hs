@@ -7,17 +7,10 @@ module Data.Cellular.UStack
   ( C, U
   , UStack (..)
   , DStack (..)
-  
-  -- , getFrom, setAt
-  -- , toList1Lim
-  -- , toList2Lim
-  -- , bigbang
 
   ) where
 
 import Control.Comonad
-
--- import Data.Cellular.Classes
 
 ----------------------------------------------------------------------
 
@@ -65,7 +58,7 @@ class Functor u => UStacker u where
   uniform :: c -> u c
 
   extract' :: u c -> c
-  duplicate' :: u c -> u (u c)
+  dup' :: UStacker v => v c -> u c -> u (v c)
 
 instance UStacker C where
   data DStack C = Base
@@ -78,8 +71,9 @@ instance UStacker C where
   shift _ = id
   uniform = C
   
+  dup' v _ = C v
   extract' (C x) = x
-  duplicate' c = C c
+
 
 instance UStacker u => UStacker (U u) where
   data DStack (U u) = Stack (DStack u) | Up | Down
@@ -101,11 +95,13 @@ instance UStacker u => UStacker (U u) where
   uniform c = infiniteCopies (uniform c)
   
   extract' = extract' . demote
-  duplicate' u = let ud = umap duplicate' u
-                     ups = tail $ iterate (shift Up) ud
-                     downs = tail $ iterate (shift Down) ud
-                     ds f = tail . map (umap extract') . iterate f
-                 in undefined
+  dup' v (U as c bs) = U (spread Down v as) (dup' v c) (spread Up v bs)
+
+spread :: (UStacker v, UStacker u) => DStack (U u) -> v c -> [u c] -> [u (v c)]
+spread dir v = zipWith dup' (iterate (shift (promote dir)) v) 
+
+promote :: DStack (U u) -> DStack v
+promote = undefined
 
 data UStacker s => UStack s c = UStack { uStacker :: s c }
 
@@ -116,33 +112,6 @@ instance UStacker s => Comonad (UStack s) where
   extract = extract' . uStacker
   duplicate = undefined
 
--- instance (Comonad u) => Comonad (U u) where
---   extract = extract . demote
---   duplicate = umap (\u -> fmap (const u) (demote u)) . promote
-
--- promote :: (Comonad u) => U u c -> U (U u) c
--- promote u = 
---   let ds f = tail . map (umap extract) . iterate f
-
---       -- The type-checker couldn't deal with a type signature for
---       -- 'ud', but this should be correct: "ud :: U u (u c)"
---       ud = umap duplicate u
---       ups = tail $ iterate shiftUp ud
---       downs = tail $ iterate shiftDown ud
-
---   in U (ds shiftUp ud) u (ds shiftDown ud)
-
--- instance Comonad C where
---   extract (C x) = x
---   duplicate c = C c
-
-
--- getFrom :: UStack u => DStack u -> u c -> c
--- getFrom d = extract . shift d
-
--- -- I suspect there is a more comonadic way to do setting though...
--- setAt :: UStack u => DStack u -> c -> u c -> u c
--- setAt d c u = shift (oppositeDir d) (modFocus (const c) (shift d u))
 
 -- quick hack zone --
 
