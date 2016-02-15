@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
@@ -50,6 +51,7 @@ class Functor u => UStacker u where
   data DStack u
   emptyDir :: DStack u
   demoteDir :: DStack (U u) -> DStack u
+  promoteDir :: DStack u -> DStack (U u)
   oppositeDir :: DStack u -> DStack u
   
   modFocus :: (c -> c) -> u c -> u c
@@ -58,12 +60,13 @@ class Functor u => UStacker u where
   uniform :: c -> u c
 
   extract' :: u c -> c
-  dup' :: UStacker v => v c -> u c -> u (v c)
+  dup' :: UStacker v => (DStack u -> DStack v) -> v c -> u c -> u (v c)
 
 instance UStacker C where
   data DStack C = Base
   emptyDir = Base
   demoteDir _ = Base
+  promoteDir = Stack
   oppositeDir _ = Base
 
   modFocus f (C c) = C (f c)
@@ -71,7 +74,7 @@ instance UStacker C where
   shift _ = id
   uniform = C
   
-  dup' v _ = C v
+  dup' _ v _ = C v
   extract' (C x) = x
 
 
@@ -81,6 +84,8 @@ instance UStacker u => UStacker (U u) where
 
   demoteDir (Stack d) = d
   demoteDir _ = emptyDir
+  
+  promoteDir = Stack
 
   oppositeDir Up = Down
   oppositeDir Down = Up
@@ -95,13 +100,12 @@ instance UStacker u => UStacker (U u) where
   uniform c = infiniteCopies (uniform c)
   
   extract' = extract' . demote
-  dup' v (U as c bs) = U (spread Down v as) (dup' v c) (spread Up v bs)
+  dup' f v (U as c bs) = U (spread (f . Stack) (f Down) v as) 
+                           (dup' (f . Stack) v c)
+                           (spread (f . Stack) (f Up) v bs)
 
-spread :: (UStacker v, UStacker u) => DStack (U u) -> v c -> [u c] -> [u (v c)]
-spread dir v = zipWith dup' (iterate (shift (promote dir)) v) 
-
-promote :: DStack (U u) -> DStack v
-promote = undefined
+spread :: (UStacker v, UStacker u) => (DStack u -> DStack v) -> DStack v -> v c -> [u c] -> [u (v c)]
+spread f' dir v = zipWith (dup' f') (iterate (shift dir) v)
 
 data UStacker s => UStack s c = UStack { uStacker :: s c }
 
@@ -110,7 +114,7 @@ instance UStacker s => Functor (UStack s) where
 
 instance UStacker s => Comonad (UStack s) where
   extract = extract' . uStacker
-  duplicate = undefined
+  duplicate v = UStack (fmap UStack (dup' id (uStacker v) (uStacker v)))
 
 
 -- quick hack zone --
