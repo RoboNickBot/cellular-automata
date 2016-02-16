@@ -100,13 +100,13 @@ rule3 u = case extract (shift right u) of
                    FooLive -> FooLive
                    _ -> FooDead
 
-left = Stack Up :: Dir U2
+left = Stack Up :: DStack U2
 
-right = Stack Down :: Dir U2
+right = Stack Down :: DStack U2
 
-up = Down :: Dir U2
+up = Down :: DStack U2
 
-down = Up :: Dir U2
+down = Up :: DStack U2
 
 data Conway = On | Off
   deriving (Show, Read, Eq, Ord)

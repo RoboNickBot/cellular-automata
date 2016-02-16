@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -7,7 +8,9 @@ module Data.Cellular.UStack
   ( C (..)
   , U (..)
   , UStack (..)
+  , DStack (..)
   , Dir (..)
+  , dir
   , mkList
 
   ) where
@@ -17,19 +20,19 @@ import Control.Comonad
 ----------------------------------------------------------------------
 
 class UStack u where
-  data Dir u
-  emptyDir :: Dir u
-  demoteDir :: Dir (U u) -> Dir u
-  promoteDir :: Dir u -> Dir (U u)
-  oppositeDir :: Dir u -> Dir u
+  data DStack u
+  emptyDStack :: DStack u
+  demoteDStack :: DStack (U u) -> DStack u
+  promoteDStack :: DStack u -> DStack (U u)
+  oppositeDStack :: DStack u -> DStack u
 
   modFocus :: (c -> c) -> u c -> u c
 
-  shift :: Dir u -> u c -> u c
+  shift :: DStack u -> u c -> u c
   uniform :: c -> u c
 
   extract' :: u c -> c
-  dup' :: UStack v => (Dir u -> Dir v) -> v c -> u c -> u (v c)
+  dup' :: UStack v => (DStack u -> DStack v) -> v c -> u c -> u (v c)
 
 
 ----------------------------------------------------------------------
@@ -41,11 +44,11 @@ instance Functor C where
   fmap f (C c) = C (f c)
 
 instance UStack C where
-  data Dir C = Base
-  emptyDir = Base
-  demoteDir _ = Base
-  promoteDir = Stack
-  oppositeDir _ = Base
+  data DStack C = Base
+  emptyDStack = Base
+  demoteDStack _ = Base
+  promoteDStack = Stack
+  oppositeDStack _ = Base
 
   modFocus f (C c) = C (f c)
 
@@ -88,23 +91,23 @@ instance (Functor u) => Functor (U u) where
   fmap = umap . fmap
 
 instance UStack u => UStack (U u) where
-  data Dir (U u) = Stack (Dir u) | Up | Down
-  emptyDir = Stack emptyDir
+  data DStack (U u) = Stack (DStack u) | Up | Down
+  emptyDStack = Stack emptyDStack
 
-  demoteDir (Stack d) = d
-  demoteDir _ = emptyDir
+  demoteDStack (Stack d) = d
+  demoteDStack _ = emptyDStack
   
-  promoteDir = Stack
+  promoteDStack = Stack
 
-  oppositeDir Up = Down
-  oppositeDir Down = Up
-  oppositeDir (Stack d) = Stack (oppositeDir d)
+  oppositeDStack Up = Down
+  oppositeDStack Down = Up
+  oppositeDStack (Stack d) = Stack (oppositeDStack d)
 
   modFocus f u = modUFocus (modFocus f) u
 
   shift Up   = shiftUp
   shift Down = shiftDown
-  shift d    = umap (shift (demoteDir d))
+  shift d    = umap (shift (demoteDStack d))
 
   uniform c = infiniteCopies (uniform c)
   
@@ -113,12 +116,23 @@ instance UStack u => UStack (U u) where
                            (dup' (f . Stack) v c)
                            (spread (f . Stack) (f Down) v bs)
 
-spread :: (UStack v, UStack u) => (Dir u -> Dir v) -> Dir v -> v c -> [u c] -> [u (v c)]
+spread :: (UStack v, UStack u) => (DStack u -> DStack v) -> DStack v -> v c -> [u c] -> [u (v c)]
 spread f' dir v = zipWith (dup' f') (tail $ iterate (shift dir) v)
 
 instance (UStack u, Functor u) => Comonad (U u) where
   extract = extract'
   duplicate v = dup' id v v
+
+type Dir u = forall c. u c -> c
+
+dir :: (Comonad u, UStack u) => DStack u -> Dir u
+dir d = extract . shift d
+
+modify :: (Comonad u, UStack u) => (c -> c) -> DStack u -> u c -> u c
+modify f d = shift (oppositeDStack d) . modFocus f . shift d
+
+set :: (Comonad u, UStack u) => c -> DStack u -> u c -> u c
+set c d = modify (const c) d
 
 
 ----------------------------------------------------------------------
