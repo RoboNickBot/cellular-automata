@@ -1,16 +1,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
-
 {-# LANGUAGE TypeFamilies #-}
 
 module Data.Cellular.UStack
   ( C (..)
   , U (..)
-  , UStacker (..)
   , UStack (..)
-  , DStack (..)
-  , shift
+  , Dir (..)
   , mkList
 
   ) where
@@ -19,11 +16,49 @@ import Control.Comonad
 
 ----------------------------------------------------------------------
 
+class UStack u where
+  data Dir u
+  emptyDir :: Dir u
+  demoteDir :: Dir (U u) -> Dir u
+  promoteDir :: Dir u -> Dir (U u)
+  oppositeDir :: Dir u -> Dir u
+
+  modFocus :: (c -> c) -> u c -> u c
+
+  shift :: Dir u -> u c -> u c
+  uniform :: c -> u c
+
+  extract' :: u c -> c
+  dup' :: UStack v => (Dir u -> Dir v) -> v c -> u c -> u (v c)
+
+
+----------------------------------------------------------------------
+
 data C c = C c
   deriving (Show, Eq, Ord)
 
 instance Functor C where
   fmap f (C c) = C (f c)
+
+instance UStack C where
+  data Dir C = Base
+  emptyDir = Base
+  demoteDir _ = Base
+  promoteDir = Stack
+  oppositeDir _ = Base
+
+  modFocus f (C c) = C (f c)
+
+  shift _ = id
+  uniform = C
+
+  dup' _ v _ = C v
+  extract' (C x) = x
+
+instance Comonad C where
+  extract = extract'
+  duplicate c = C c
+
 
 ----------------------------------------------------------------------
 
@@ -52,41 +87,8 @@ mkList r (U as c bs) = reverse (take r as) ++ [c] ++ take r bs
 instance (Functor u) => Functor (U u) where                       
   fmap = umap . fmap
 
-----------------------------------------------------------------------
-
-class Functor u => UStacker u where
-  data DStack u
-  emptyDir :: DStack u
-  demoteDir :: DStack (U u) -> DStack u
-  promoteDir :: DStack u -> DStack (U u)
-  oppositeDir :: DStack u -> DStack u
-  
-  modFocus :: (c -> c) -> u c -> u c
-
-  shift' :: DStack u -> u c -> u c
-  uniform :: c -> u c
-
-  extract' :: u c -> c
-  dup' :: UStacker v => (DStack u -> DStack v) -> v c -> u c -> u (v c)
-
-instance UStacker C where
-  data DStack C = Base
-  emptyDir = Base
-  demoteDir _ = Base
-  promoteDir = Stack
-  oppositeDir _ = Base
-
-  modFocus f (C c) = C (f c)
-
-  shift' _ = id
-  uniform = C
-  
-  dup' _ v _ = C v
-  extract' (C x) = x
-
-
-instance UStacker u => UStacker (U u) where
-  data DStack (U u) = Stack (DStack u) | Up | Down
+instance UStack u => UStack (U u) where
+  data Dir (U u) = Stack (Dir u) | Up | Down
   emptyDir = Stack emptyDir
 
   demoteDir (Stack d) = d
@@ -100,9 +102,9 @@ instance UStacker u => UStacker (U u) where
 
   modFocus f u = modUFocus (modFocus f) u
 
-  shift' Up   = shiftUp
-  shift' Down = shiftDown
-  shift' d    = umap (shift' (demoteDir d))
+  shift Up   = shiftUp
+  shift Down = shiftDown
+  shift d    = umap (shift (demoteDir d))
 
   uniform c = infiniteCopies (uniform c)
   
@@ -111,21 +113,15 @@ instance UStacker u => UStacker (U u) where
                            (dup' (f . Stack) v c)
                            (spread (f . Stack) (f Down) v bs)
 
-spread :: (UStacker v, UStacker u) => (DStack u -> DStack v) -> DStack v -> v c -> [u c] -> [u (v c)]
-spread f' dir v = zipWith (dup' f') (tail $ iterate (shift' dir) v)
+spread :: (UStack v, UStack u) => (Dir u -> Dir v) -> Dir v -> v c -> [u c] -> [u (v c)]
+spread f' dir v = zipWith (dup' f') (tail $ iterate (shift dir) v)
 
-data UStacker s => UStack s c = UStack { uStacker :: s c }
+instance (UStack u, Functor u) => Comonad (U u) where
+  extract = extract'
+  duplicate v = dup' id v v
 
-instance UStacker s => Functor (UStack s) where
-  fmap f = UStack . fmap f . uStacker
 
-instance UStacker s => Comonad (UStack s) where
-  extract = extract' . uStacker
-  duplicate v = UStack (fmap UStack (dup' id (uStacker v) (uStacker v)))
-
-shift :: UStacker s => DStack s -> UStack s c -> UStack s c
-shift d (UStack s) = UStack (shift' d s)
-
+----------------------------------------------------------------------
 -- quick hack zone --
 
 unC :: C c -> c
