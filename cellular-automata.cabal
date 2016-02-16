@@ -23,3 +23,12 @@ library
 
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+test-suite tests
+  default-language:    Haskell2010
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      tests
+  main-is:             Main.hs
+  build-depends:       base >=4.8 && <4.9
+                     , comonad >=4.2 && <4.3
+                     , cellular-automata

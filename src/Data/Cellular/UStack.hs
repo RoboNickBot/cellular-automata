@@ -5,9 +5,13 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Data.Cellular.UStack
-  ( C, U
+  ( C (..)
+  , U (..)
+  , UStacker (..)
   , UStack (..)
   , DStack (..)
+  , shift
+  , mkList
 
   ) where
 
@@ -42,6 +46,9 @@ demote (U _ x _) = x
 modUFocus :: (u c -> u c) -> U u c -> U u c
 modUFocus f (U as x bs) = U as (f x) bs
 
+mkList :: Int -> U u c -> [u c]
+mkList r (U as c bs) = reverse (take r as) ++ [c] ++ take r bs
+
 instance (Functor u) => Functor (U u) where                       
   fmap = umap . fmap
 
@@ -56,7 +63,7 @@ class Functor u => UStacker u where
   
   modFocus :: (c -> c) -> u c -> u c
 
-  shift :: DStack u -> u c -> u c
+  shift' :: DStack u -> u c -> u c
   uniform :: c -> u c
 
   extract' :: u c -> c
@@ -71,7 +78,7 @@ instance UStacker C where
 
   modFocus f (C c) = C (f c)
 
-  shift _ = id
+  shift' _ = id
   uniform = C
   
   dup' _ v _ = C v
@@ -93,19 +100,19 @@ instance UStacker u => UStacker (U u) where
 
   modFocus f u = modUFocus (modFocus f) u
 
-  shift Up   = shiftUp
-  shift Down = shiftDown
-  shift d    = umap (shift (demoteDir d))
+  shift' Up   = shiftUp
+  shift' Down = shiftDown
+  shift' d    = umap (shift' (demoteDir d))
 
   uniform c = infiniteCopies (uniform c)
   
   extract' = extract' . demote
-  dup' f v (U as c bs) = U (spread (f . Stack) (f Down) v as) 
+  dup' f v (U as c bs) = U (spread (f . Stack) (f Up) v as) 
                            (dup' (f . Stack) v c)
-                           (spread (f . Stack) (f Up) v bs)
+                           (spread (f . Stack) (f Down) v bs)
 
 spread :: (UStacker v, UStacker u) => (DStack u -> DStack v) -> DStack v -> v c -> [u c] -> [u (v c)]
-spread f' dir v = zipWith (dup' f') (iterate (shift dir) v)
+spread f' dir v = zipWith (dup' f') (tail $ iterate (shift' dir) v)
 
 data UStacker s => UStack s c = UStack { uStacker :: s c }
 
@@ -116,6 +123,8 @@ instance UStacker s => Comonad (UStack s) where
   extract = extract' . uStacker
   duplicate v = UStack (fmap UStack (dup' id (uStacker v) (uStacker v)))
 
+shift :: UStacker s => DStack s -> UStack s c -> UStack s c
+shift d (UStack s) = UStack (shift' d s)
 
 -- quick hack zone --
 
