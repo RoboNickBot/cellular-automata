@@ -1,8 +1,8 @@
 module Data.Cellular 
-  ( module Data.Cellular.UStack
-  , module Data.Cellular.Classes 
+  ( module Data.Cellular.Universe
+  , module Data.Cellular.Automaton
 
   ) where
   
-import Data.Cellular.UStack
-import Data.Cellular.Classes
+import Data.Cellular.Universe
+import Data.Cellular.Automaton

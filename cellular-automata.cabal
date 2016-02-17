@@ -11,9 +11,10 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Data.Cellular
-  
-  other-modules:       Data.Cellular.Classes
                      , Data.Cellular.UStack
+  
+  other-modules:       Data.Cellular.Automaton
+                     , Data.Cellular.Universe
   
   other-extensions:    MultiParamTypeClasses
                      , FunctionalDependencies

@@ -1,27 +1,19 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
 
-{-# LANGUAGE MultiParamTypeClasses #-}
-
-module Data.Cellular.Classes
-  ( 
+module Data.Cellular.Universe
+  (
   
     Universe (..)
+  , step
   , opposite
   , move
   , look
   , at
   , modify
   , set
-
   , Path (Path)
   , path  
-
-  , Automaton (..)
-  , next
-
+  
   ) where
 
 import Control.Comonad
@@ -62,12 +54,3 @@ modify = modFocus
 
 set :: Universe u => c -> u c -> u c
 set c = modify (const c)
-
-----------------------------------------------------------------------
-
-class Automaton u c where
-  rule :: u c -> c
-  
-next :: (Universe u, Automaton u c) => u c -> u c
-next = step rule
-

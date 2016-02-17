@@ -1,21 +1,17 @@
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Data.Cellular.UStack
-  ( C (..)
-  , U (..)
-  , UStack (..)
-  , DStack (..)
-  , Dir (..)
-  , dir
+  ( C
+  , U
   , mkList
 
   ) where
 
 import Control.Comonad
+
+import Data.Cellular.Universe
 
 ----------------------------------------------------------------------
 
@@ -26,9 +22,9 @@ class UStack u where
   promoteDStack :: DStack u -> DStack (U u)
   oppositeDStack :: DStack u -> DStack u
 
-  modFocus :: (c -> c) -> u c -> u c
+  modFocus' :: (c -> c) -> u c -> u c
 
-  shift :: DStack u -> u c -> u c
+  shift' :: DStack u -> u c -> u c
   uniform :: c -> u c
 
   extract' :: u c -> c
@@ -50,9 +46,9 @@ instance UStack C where
   promoteDStack = Stack
   oppositeDStack _ = Base
 
-  modFocus f (C c) = C (f c)
+  modFocus' f (C c) = C (f c)
 
-  shift _ = id
+  shift' _ = id
   uniform = C
 
   dup' _ v _ = C v
@@ -103,11 +99,11 @@ instance UStack u => UStack (U u) where
   oppositeDStack Down = Up
   oppositeDStack (Stack d) = Stack (oppositeDStack d)
 
-  modFocus f u = modUFocus (modFocus f) u
+  modFocus' f u = modUFocus (modFocus' f) u
 
-  shift Up   = shiftUp
-  shift Down = shiftDown
-  shift d    = umap (shift (demoteDStack d))
+  shift' Up   = shiftUp
+  shift' Down = shiftDown
+  shift' d    = umap (shift' (demoteDStack d))
 
   uniform c = infiniteCopies (uniform c)
   
@@ -117,23 +113,23 @@ instance UStack u => UStack (U u) where
                            (spread (f . Stack) (f Down) v bs)
 
 spread :: (UStack v, UStack u) => (DStack u -> DStack v) -> DStack v -> v c -> [u c] -> [u (v c)]
-spread f' dir v = zipWith (dup' f') (tail $ iterate (shift dir) v)
+spread f' dir v = zipWith (dup' f') (tail $ iterate (shift' dir) v)
 
 instance (UStack u, Functor u) => Comonad (U u) where
   extract = extract'
   duplicate v = dup' id v v
 
-type Dir u = forall c. u c -> c
+instance (UStack u, Comonad u) => Universe u where
+  data Dir u = DStackDir { dstack :: DStack u }
 
-dir :: (Comonad u, UStack u) => DStack u -> Dir u
-dir d = extract . shift d
+  flipDir = DStackDir . oppositeDStack . dstack
+  nullDir = DStackDir emptyDStack
 
-modify :: (Comonad u, UStack u) => (c -> c) -> DStack u -> u c -> u c
-modify f d = shift (oppositeDStack d) . modFocus f . shift d
+  shift = shift' . dstack
+  modFocus = modFocus'
 
-set :: (Comonad u, UStack u) => c -> DStack u -> u c -> u c
-set c d = modify (const c) d
-
+atomicPath :: UStack u => DStack u -> Path u
+atomicPath d = Path [DStackDir d]
 
 ----------------------------------------------------------------------
 -- quick hack zone --

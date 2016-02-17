@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -17,7 +18,8 @@ main = do let init = vis uni2
           putStrLn end
           if end == step30
              then return ()
-             else do putStrLn step30
+             else do putStrLn ""
+                     putStrLn step30
                      die "Conway test did not match"
 
 step30 = ".........................................\n\
@@ -63,12 +65,11 @@ step30 = ".........................................\n\
           \........................................."
 
 uni2 :: U2 Conway
-uni2 = (set On . shift right . set On . shift left . shift down . set On . shift up . shift up . set On . shift left . set On . shift right . shift down) (uniform Off)
-
-set c = modFocus (const c)
-
-uni :: U2 FooCell
-uni = modFocus (const FooLive) (uniform FooDead)
+uni2 = (extend up . poke down . extend right . poke left . poke down . poke left . poke up)
+         (uniform Off)
+         
+uni2 :: U2 Conway
+poke = set On
 
 vis :: U2 Conway -> String
 vis = concat . intersperse "\n"
@@ -87,26 +88,16 @@ type U1 = U U0
 
 type U2 = U U1
 
-instance Automaton (U2) FooCell where
-  rule = rule3
 
-rule1 u = extract u
+left = dir (Stack Up) :: Dir U2
 
-rule2 u = extract ((shift right) u)
+right = dir (Stack Down) :: Dir U2
 
-rule3 u = case extract (shift right u) of
-            FooLive -> FooLive
-            _ -> case extract ((shift down . shift right) u) of
-                   FooLive -> FooLive
-                   _ -> FooDead
+up = dir Up :: Dir U2
 
-left = Stack Up :: DStack U2
+down = dir Down :: Dir U2
 
-right = Stack Down :: DStack U2
-
-up = Down :: DStack U2
-
-down = Up :: DStack U2
+self = dir (Stack (Stack Base)) :: Dir U2
 
 data Conway = On | Off
   deriving (Show, Read, Eq, Ord)
@@ -114,15 +105,18 @@ data Conway = On | Off
 instance Automaton U2 Conway where
   rule = conway
   
+dcat :: Dir u -> Dir u -> Dir u
+dcat d1 d2 u = d1 . extend d2 $ u
+
 conway :: U2 Conway -> Conway
-conway u = let ns = [extract (shift right u)
-                    ,extract (shift left u)
-                    ,extract (shift up u)
-                    ,extract (shift down u)
-                    ,extract ((shift up . shift right) u)
-                    ,extract ((shift up . shift left) u)
-                    ,extract ((shift down . shift right) u)
-                    ,extract ((shift down . shift left) u)]
+conway u = let ns = [right u
+                    ,left u
+                    ,up u
+                    ,down u
+                    ,up (extend right) u
+                    ,up (extend left u)
+                    ,down (extend right u)
+                    ,down (extend left u)]
                count = length (filter (== On) ns)
                self = extract u
            in case self of
