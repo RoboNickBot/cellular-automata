@@ -3,8 +3,11 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Data.Cellular.UStack
-  ( C
+  ( C (C)
   , U
+  , DStack (..)
+  , fromDStack
+  , promotePath
   , mkList
 
   ) where
@@ -25,7 +28,7 @@ class UStack u where
   modFocus' :: (c -> c) -> u c -> u c
 
   shift' :: DStack u -> u c -> u c
-  uniform :: c -> u c
+  uniform' :: c -> u c
 
   extract' :: u c -> c
   dup' :: UStack v => (DStack u -> DStack v) -> v c -> u c -> u (v c)
@@ -49,7 +52,7 @@ instance UStack C where
   modFocus' f (C c) = C (f c)
 
   shift' _ = id
-  uniform = C
+  uniform' = C
 
   dup' _ v _ = C v
   extract' (C x) = x
@@ -105,7 +108,7 @@ instance UStack u => UStack (U u) where
   shift' Down = shiftDown
   shift' d    = umap (shift' (demoteDStack d))
 
-  uniform c = infiniteCopies (uniform c)
+  uniform' c = infiniteCopies (uniform' c)
   
   extract' = extract' . demote
   dup' f v (U as c bs) = U (spread (f . Stack) (f Up) v as) 
@@ -127,9 +130,14 @@ instance (UStack u, Comonad u) => Universe u where
 
   shift = shift' . dstack
   modFocus = modFocus'
+  uniform = uniform'
 
-atomicPath :: UStack u => DStack u -> Path u
-atomicPath d = Path [DStackDir d]
+fromDStack :: UStack u => DStack u -> Path u
+fromDStack d = Path [DStackDir d]
+
+promotePath :: UStack u => Path u -> Path (U u)
+promotePath (Path ds) = Path (map f ds)
+  where f = DStackDir . promoteDStack . dstack
 
 ----------------------------------------------------------------------
 -- quick hack zone --
@@ -149,6 +157,3 @@ toList2Lim :: Int -> U (U C) c -> [[c]]
 toList2Lim i (U as x bs) = (reverse . take i . map (toList1Lim i)) as
                            ++ [toList1Lim i x] 
                            ++ (take i . map (toList1Lim i)) bs
-
--- bigbang :: UStack u => c -> c -> u c
--- bigbang seed space = modFocus (const seed) $ uniform space

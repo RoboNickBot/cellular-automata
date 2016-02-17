@@ -12,6 +12,9 @@ cabal-version:       >=1.10
 library
   exposed-modules:     Data.Cellular
                      , Data.Cellular.UStack
+                     , Data.Cellular.Universe.Sidewalk
+                     , Data.Cellular.Universe.Chessboard
+                     , Data.Cellular.Automaton.Conway
   
   other-modules:       Data.Cellular.Automaton
                      , Data.Cellular.Universe
